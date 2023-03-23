@@ -34,7 +34,7 @@ class AuthController
 
         $v = new Validator($data);
         $v->rule('required', ['name', 'email','password', 'passwordConfirm']);
-        $v->rule('equal', 'password', 'passwordConfirm')->label('Confirm Password');
+        $v->rule('equals', 'confirmPassword', 'password')->label('Confirm Password');
         $v->rule('email', 'email');
         $v->rule(
             fn($field, $value, $params, $fields) => ! $this->entityManager->getRepository(User::class)->count(
