@@ -33,22 +33,19 @@ class AuthController
         $data = $request->getParsedBody();
 
         $v = new Validator($data);
-        $v->rule('required', ['name', 'email','password', 'passwordConfirm']);
-        $v->rule('equals', 'confirmPassword', 'password')->label('Confirm Password');
+        $v->rule('required', ['name', 'email', 'password', 'confirmPassword']);
         $v->rule('email', 'email');
+        $v->rule('equals', 'confirmPassword', 'password')->label('Confirm Password');
         $v->rule(
             fn($field, $value, $params, $fields) => ! $this->entityManager->getRepository(User::class)->count(
                 ['email' => $value]
             ),
             'email'
-        )->message(' the given email address already exists');
-        if($v->validate()) {
-            echo "Yay! We're all good!";
-        } else {
-            // Errors
+        )->message('User with the given email address already exists');
+
+        if (! $v->validate()) {
             throw new ValidationException($v->errors());
         }
-
 
         $user = new User();
 
