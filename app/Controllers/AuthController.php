@@ -4,6 +4,7 @@ declare(strict_types = 1);
 
 namespace App\Controllers;
 
+use App\Contracts\AuthInterface;
 use App\Entity\User;
 use App\Exception\ValidationException;
 use Doctrine\ORM\EntityManager;
@@ -14,7 +15,10 @@ use Valitron\Validator;
 
 class AuthController
 {
-    public function __construct(private readonly Twig $twig, private readonly EntityManager $entityManager)
+    public function __construct(
+        private readonly Twig $twig,
+        private readonly EntityManager $entityManager,
+        private readonly AuthInterface $auth)
     {
     }
 
@@ -59,5 +63,28 @@ class AuthController
 
 
         return $response;
+    }
+
+    public function logIn(Request $request, Response $response): Response
+    {
+        $data = $request->getParsedBody();
+
+        $v = new Validator($data);
+
+        $v->rule('required', ['email', 'password']);
+        $v->rule('email', 'email');
+
+        if(! $this->auth->attemptLogin($data)) {
+            throw new ValidationException(['password' => ['Invalid credentials']]);
+        }
+
+        return $response->withHeader('Location', '/')->withStatus(302);
+    }
+
+    public function logOut(Request $request, Response $response): Response
+    {
+        $this->auth->logOut();
+
+        return $response->withHeader('Location', '/')->withStatus(302);
     }
 }
