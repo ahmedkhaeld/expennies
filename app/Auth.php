@@ -8,9 +8,10 @@ use App\Contracts\AuthInterface;
 use App\Contracts\SessionManagerInterface;
 use App\Contracts\UserInterface;
 use App\Contracts\UserProviderServiceInterface;
+use App\DataObjects\RegisterUserData;
+use App\Entity\User;
 
-//Auth class is responsible for authenticating users and checking their credentials.
-//It also provides a user() method that returns the currently authenticated user.
+
 class Auth implements AuthInterface
 {
     private ?UserInterface $user = null;
@@ -54,11 +55,8 @@ class Auth implements AuthInterface
             return false;
         }
 
-        $this->session->regenerate();
-
-        $this->session->put('user', $user->getId());
-
-        $this->user = $user;
+        //authenticates the user after login
+        $this->login($user);
 
         return true;
     }
@@ -74,5 +72,24 @@ class Auth implements AuthInterface
        $this->session->regenerate();
 
         $this->user = null;
+    }
+
+    public function register(RegisterUserData $data): UserInterface
+    {
+        $user= $this->userProvider->createUser($data);
+
+        //authenticates the user after registration
+        $this->login($user);
+
+        return $user;
+    }
+
+    public function login(UserInterface $user): void
+    {
+        $this->session->regenerate();
+
+        $this->session->put('user', $user->getId());
+
+        $this->user = $user;
     }
 }
