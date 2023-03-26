@@ -2,11 +2,24 @@
 
 declare(strict_types = 1);
 
+use App\Auth;
 use App\Config;
+use App\Contracts\AuthInterface;
+use App\Contracts\RequestValidatorFactoryInterface;
+use App\Contracts\SessionManagerInterface;
+use App\Contracts\UserProviderServiceInterface;
+use App\DataObjects\SessionConfig;
 use App\Enum\AppEnvironment;
+use App\Enum\SameSite;
+use App\RequestValidators\RequestValidatorFactory;
+use App\Services\UserProviderService;
+use App\SessionManager;
 use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\ORMSetup;
 use Psr\Container\ContainerInterface;
+use Psr\Http\Message\ResponseFactoryInterface;
+use Slim\App;
+use Slim\Factory\AppFactory;
 use Slim\Views\Twig;
 use Symfony\Bridge\Twig\Extension\AssetExtension;
 use Symfony\Component\Asset\Package;
@@ -20,6 +33,18 @@ use Twig\Extra\Intl\IntlExtension;
 use function DI\create;
 
 return [
+    App::class  => function(ContainerInterface $container){
+    AppFactory::setContainer($container);
+
+        $addMiddlewares = require CONFIG_PATH . '/middleware.php';
+        $router = require CONFIG_PATH . '/routes/web.php';
+
+       $app= AppFactory::create();
+        $router($app);
+        $addMiddlewares($app);
+
+        return $app;
+    },
     Config::class                 => create(Config::class)->constructor(require CONFIG_PATH . '/app.php'),
     EntityManager::class          => fn(Config $config) => EntityManager::create(
         $config->get('doctrine.connection'),
@@ -50,4 +75,19 @@ return [
         new EntrypointLookup(BUILD_PATH . '/entrypoints.json'),
         $container->get('webpack_encore.packages')
     ),
+    ResponseFactoryInterface::class => fn(App $app)=> $app->getResponseFactory(),
+    AuthInterface::class =>fn(ContainerInterface $container)=>$container->get(Auth::class),
+    UserProviderServiceInterface::class => fn(ContainerInterface $container) => $container->get(
+    UserProviderService::class),
+
+    SessionManagerInterface::class=>fn(Config $config)=> new SessionManager(
+        new SessionConfig(
+            $config->get('session.name',''),
+            $config->get('session.flash_name','flash'),
+            $config->get('session.secure',true),
+            $config->get('session.httponly',true),
+            SameSite::from($config->get('session.samesite','lax'))
+        )
+    ),
+    RequestValidatorFactoryInterface::class=>fn(ContainerInterface $container)=>$container->get(RequestValidatorFactory::class),
 ];

@@ -4,17 +4,23 @@ declare(strict_types = 1);
 
 namespace App\Entity;
 
+use App\Contracts\UserInterface;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping\Column;
 use Doctrine\ORM\Mapping\Entity;
 use Doctrine\ORM\Mapping\GeneratedValue;
+use Doctrine\ORM\Mapping\HasLifecycleCallbacks;
 use Doctrine\ORM\Mapping\Id;
 use Doctrine\ORM\Mapping\OneToMany;
+use Doctrine\ORM\Mapping\PrePersist;
+use Doctrine\ORM\Mapping\PreUpdate;
 use Doctrine\ORM\Mapping\Table;
+use Doctrine\Persistence\Event\LifecycleEventArgs;
 
 #[Entity, Table('users')]
-class User
+#[HasLifecycleCallbacks]
+class User implements UserInterface
 {
     #[Id, Column(options: ['unsigned' => true]), GeneratedValue]
     private int $id;
@@ -87,6 +93,15 @@ class User
         return $this;
     }
 
+    #[PrePersist, PreUpdate]
+    public function updateTimestamps(LifecycleEventArgs $arg):void
+    {
+        if (!isset($this->createdAt)) {
+            $this->setCreatedAt(new \DateTime('now'));
+        }
+
+        $this->setUpdatedAt(new \DateTime('now'));
+    }
     public function getCreatedAt(): \DateTime
     {
         return $this->createdAt;
