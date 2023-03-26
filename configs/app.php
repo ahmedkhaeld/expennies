@@ -29,6 +29,7 @@ return [
     ],
     'session'=>[
         'name' => $appName . '_session',
+        'flash_name' => $appName . '_flash',
         'lifetime' => $_ENV['SESSION_LIFETIME'] ?? 60 * 60 * 24 * 30,
         'path' => $_ENV['SESSION_PATH'] ?? '/',
         'domain' => $_ENV['SESSION_DOMAIN'] ?? null,

@@ -19,5 +19,9 @@ interface SessionManagerInterface
 
     public function forget(string $key):void;
 
+    public function flash(string $key, array $messages):void;
+
+    public function getFlash(string $key):array;
+
 
 }
