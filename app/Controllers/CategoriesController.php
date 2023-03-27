@@ -70,19 +70,20 @@ class CategoriesController
 
     public function update(Request $request, Response $response, array $args): Response
     {
+        //merge the id from the route with the data from the request body and validate
         $data = $this->requestValidatorFactory->make(UpdateCategoryRequestValidator::class)->validate(
-            $request->getParsedBody()
+            $args+ $request->getParsedBody()
         );
 
-        $category=$this->categoryService->getByID((int) $args['id']);
+        $category=$this->categoryService->getByID((int) $data['id']);
         if(!$category){
             return $response->withStatus(404);
         }
 
-        $data=['status'=>'success'];
 
-        //write the data to the response as json
-        return $this->responseFormatter->asJSON($response, $data);
+        $this->categoryService->update($category, $data['name']);
+
+        return $response;
     }
 
 }

@@ -45,4 +45,14 @@ class CategoryService
         return $this->entityManager->find(Category::class, $id);
     }
 
+    public function update(Category $category, string $name): Category
+    {
+        $category->setName($name);
+
+        $this->entityManager->persist($category);
+        $this->entityManager->flush();
+
+        return $category;
+    }
+
 }
